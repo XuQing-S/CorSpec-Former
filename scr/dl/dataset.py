@@ -237,29 +237,6 @@ def create_metal_dataloaders(
         )
         for split in SPLITS
     }
-
-
-def create_feature_metal_dataloaders(
-    features_root: str | Path,
-    processed_root: str | Path,
-    *,
-    feature_name: str = "feature",
-    batch_size: int = DEFAULT_BATCH_SIZE,
-    num_workers: int = 0,
-    pin_memory: bool | None = None,
-    load_sample_index: bool = False,
-) -> dict[SplitName, DataLoader]:
-    """Create train/val/test DataLoaders for engineered feature matrices."""
-    datasets = {
-        split: LIBSFeatureDataset(
-            features_root,
-            processed_root,
-            split,
-            feature_name=feature_name,
-            load_sample_index=load_sample_index,
-        )
-        for split in SPLITS
-    }
     return {
         "train": create_dataloader(
             datasets["train"],
@@ -282,6 +259,29 @@ def create_feature_metal_dataloaders(
             num_workers=num_workers,
             pin_memory=pin_memory,
         ),
+    }
+
+
+def create_feature_metal_dataloaders(
+    features_root: str | Path,
+    processed_root: str | Path,
+    *,
+    feature_name: str = "feature",
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    num_workers: int = 0,
+    pin_memory: bool | None = None,
+    load_sample_index: bool = False,
+) -> dict[SplitName, DataLoader]:
+    """Create train/val/test DataLoaders for engineered feature matrices."""
+    datasets = {
+        split: LIBSFeatureDataset(
+            features_root,
+            processed_root,
+            split,
+            feature_name=feature_name,
+            load_sample_index=load_sample_index,
+        )
+        for split in SPLITS
     }
     return {
         "train": create_dataloader(
