@@ -74,25 +74,27 @@ def extract_input_saliency_by_class(
     was_training = model.training
     model.eval()
     try:
-        for inputs, labels in loader:
-            if all(len(items) >= max_samples_per_class for items in saliency_by_class.values()):
-                break
+        # cuDNN RNN does not support backward in eval mode, so disable cuDNN locally
+        with torch.backends.cudnn.flags(enabled=False):
+            for inputs, labels in loader:
+                if all(len(items) >= max_samples_per_class for items in saliency_by_class.values()):
+                    break
 
-            inputs = inputs.to(device, non_blocking=True).detach().requires_grad_(True)
-            labels = labels.to(device, non_blocking=True)
-            model.zero_grad()
-            logits = model(inputs)
-            target_scores = logits.gather(1, labels.view(-1, 1)).sum()
-            target_scores.backward()
+                inputs = inputs.to(device, non_blocking=True).detach().requires_grad_(True)
+                labels = labels.to(device, non_blocking=True)
+                model.zero_grad()
+                logits = model(inputs)
+                target_scores = logits.gather(1, labels.view(-1, 1)).sum()
+                target_scores.backward()
 
-            batch_saliency = inputs.grad.detach().abs().cpu().numpy()
-            batch_inputs = inputs.detach().cpu().numpy()
-            batch_labels = labels.detach().cpu().numpy().astype(int)
-            for sample_saliency, sample_input, label in zip(batch_saliency, batch_inputs, batch_labels):
-                class_items = saliency_by_class.get(int(label))
-                if class_items is not None and len(class_items) < max_samples_per_class:
-                    class_items.append(sample_saliency)
-                    inputs_by_class[int(label)].append(sample_input)
+                batch_saliency = inputs.grad.detach().abs().cpu().numpy()
+                batch_inputs = inputs.detach().cpu().numpy()
+                batch_labels = labels.detach().cpu().numpy().astype(int)
+                for sample_saliency, sample_input, label in zip(batch_saliency, batch_inputs, batch_labels):
+                    class_items = saliency_by_class.get(int(label))
+                    if class_items is not None and len(class_items) < max_samples_per_class:
+                        class_items.append(sample_saliency)
+                        inputs_by_class[int(label)].append(sample_input)
     finally:
         model.zero_grad()
         if was_training:
