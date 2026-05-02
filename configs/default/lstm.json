@@ -1,0 +1,27 @@
+{
+  "description": "Conv-LSTM baseline for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "lstm_baseline"
+  },
+  "model": "lstm",
+  "model_params": {
+    "input_channels": 1,
+    "conv_channels": 64,
+    "conv_kernel_size": 7,
+    "conv_stride": 4,
+    "hidden_size": 128,
+    "num_layers": 1,
+    "bidirectional": true,
+    "pooling": "mean",
+    "dropout": 0.3
+  },
+  "optimization": {
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "description": "FNN baseline for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "fnn_ns5_f_128_64_32_25"
+  },
+  "data": {
+    "processed_root": "data/processed/noise_shift/5",
+    "features_root": "data/features/noise_shift/5",
+    "input_kind": "feature",
+    "feature_name": "feature"
+  },
+  "model": "fnn",
+  "model_params": {
+    "input_length": 275,
+    "hidden_dims": [128, 64, 32],
+    "dropout": 0.25
+  },
+  "optimization": {
+    "learning_rate": 0.0004,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

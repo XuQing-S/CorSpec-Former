@@ -1,0 +1,24 @@
+{
+  "description": "1D ResNet baseline for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "resnet_baseline"
+  },
+  "model": "resnet",
+  "model_params": {
+    "input_channels": 1,
+    "base_channels": 32,
+    "blocks_per_stage": [2, 2, 2, 2],
+    "stem_kernel_size": 7,
+    "stem_stride": 2,
+    "dropout": 0.35
+  },
+  "optimization": {
+    "learning_rate": 0.0004,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "description": "1D CNN baseline for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "cnn_baseline"
+  },
+  "model": "cnn",
+  "model_params": {
+    "input_channels": 1,
+    "channels": [32, 64, 128, 256],
+    "kernel_sizes": [15, 9, 7, 5],
+    "pool_sizes": [2, 2, 2, null],
+    "dropout": 0.32
+  },
+  "optimization": {
+    "learning_rate": 0.0004,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}
