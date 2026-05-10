@@ -56,6 +56,65 @@ class MultiHeadSelfAttention1D(nn.Module):
         return x
 
 
+class GatedSelfAttention1D(nn.Module):
+    """Multi-head self-attention with sigmoid gating after SDPA outputs.
+
+    This follows the strongest variant reported in "Gated Attention for Large
+    Language Models": head-specific multiplicative sigmoid gates are computed
+    from the input hidden states and applied to each attention head output.
+    """
+
+    def __init__(
+        self,
+        dim: int,
+        nhead: int,
+        dropout: float = 0.0,
+        gate_granularity: str = "elementwise",
+    ) -> None:
+        super().__init__()
+        if dim % nhead != 0:
+            raise ValueError("dim must be divisible by nhead for gated self-attention")
+        if gate_granularity not in {"elementwise", "headwise"}:
+            raise ValueError("gate_granularity must be 'elementwise' or 'headwise'")
+
+        self.dim = dim
+        self.nhead = nhead
+        self.head_dim = dim // nhead
+        self.gate_granularity = gate_granularity
+
+        self.qkv = nn.Linear(dim, dim * 3)
+        gate_dim = dim if gate_granularity == "elementwise" else nhead
+        self.gate_proj = nn.Linear(dim, gate_dim)
+        self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+        self.proj = nn.Sequential(
+            nn.Linear(dim, dim),
+            nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch_size, num_tokens, _ = x.shape
+        qkv = self.qkv(x)
+        qkv = qkv.reshape(batch_size, num_tokens, 3, self.nhead, self.head_dim)
+        qkv = qkv.permute(2, 0, 3, 1, 4).contiguous()
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        attn_scores = (q @ k.transpose(-2, -1)) * (self.head_dim**-0.5)
+        attn_weights = torch.softmax(attn_scores, dim=-1)
+        attn_weights = self.attn_dropout(attn_weights)
+        attn_output = attn_weights @ v
+        attn_output = attn_output.transpose(1, 2).contiguous()
+
+        gate = torch.sigmoid(self.gate_proj(x))
+        if self.gate_granularity == "elementwise":
+            gate = gate.reshape(batch_size, num_tokens, self.nhead, self.head_dim)
+        else:
+            gate = gate[:, :, :, None]
+
+        gated_output = attn_output * gate
+        gated_output = gated_output.reshape(batch_size, num_tokens, self.dim)
+        return self.proj(gated_output)
+
+
 class FrequencyDomainSelfAttention1D(nn.Module):
     """Frequency-domain self-attention for 1D spectral token sequences."""
 
@@ -467,10 +526,12 @@ def make_self_attention(
         if dim % nhead != 0:
             raise ValueError("dim must be divisible by nhead when using mhsa")
         return MultiHeadSelfAttention1D(dim, nhead, dropout)
+    if attention_type == "gated":
+        return GatedSelfAttention1D(dim, nhead, dropout)
     if attention_type == "scsa":
         return SpectralCorrelationSelfAttention1D(dim, dropout)
     if attention_type == "fdsa":
         return FrequencyDomainSelfAttention1D(dim, frequency_bands, dropout)
     if attention_type == "hfsa":
         return HybridFrequencySelfAttention1D(dim, frequency_bands, local_kernel_size, dropout)
-    raise ValueError("self_attention_type must be 'mhsa', 'scsa', 'fdsa', or 'hfsa'")
+    raise ValueError("self_attention_type must be 'mhsa', 'gated', 'scsa', 'fdsa', or 'hfsa'")

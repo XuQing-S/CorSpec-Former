@@ -3,6 +3,7 @@
 from .attention import (
     CrossAttention1D,
     FrequencyDomainSelfAttention1D,
+    GatedSelfAttention1D,
     HybridFrequencySelfAttention1D,
     MultiHeadSelfAttention1D,
     SpectralAttention,
@@ -57,6 +58,7 @@ __all__ = [
     "SIGNAL_LENGTH",
     "CrossAttention1D",
     "FrequencyDomainSelfAttention1D",
+    "GatedSelfAttention1D",
     "HybridFrequencySelfAttention1D",
     "SpecTransformer1D",
     "SpecTransformerEncoderLayer1D",

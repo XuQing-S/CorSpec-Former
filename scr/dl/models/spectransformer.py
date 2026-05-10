@@ -21,7 +21,7 @@ SPECTRANSFORMER1D_DEFAULT_PARAMS = {
     "conv_kernel_size": 16,
     "pooling": "mean",
     "max_sequence_length": 520,
-    "attention_type": "spectral",  # spectral, mhsa, scsa, fdsa, hfsa
+    "attention_type": "spectral",  # gated, spectral, mhsa, scsa, fdsa, hfsa
     "frequency_bands": 64,
     "local_kernel_size": 5,
 }
@@ -107,8 +107,8 @@ class SpecTransformer1D(nn.Module):
             raise ValueError("pooling must be 'cls' or 'mean'")
         if d_model % nhead != 0:
             raise ValueError("d_model must be divisible by nhead")
-        if attention_type not in {"mhsa", "scsa", "fdsa", "hfsa", "spectral"}:
-            raise ValueError("attention_type must be 'mhsa', 'scsa', 'fdsa', 'hfsa', or 'spectral'")
+        if attention_type not in {"mhsa", "gated", "scsa", "fdsa", "hfsa", "spectral"}:
+            raise ValueError("attention_type must be 'mhsa', 'gated', 'scsa', 'fdsa', 'hfsa', or 'spectral'")
 
         self.pooling = pooling
         self.max_sequence_length = max_sequence_length
