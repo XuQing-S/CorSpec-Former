@@ -12,6 +12,7 @@ from .inception import Inception1D, default_inception1d_params
 from .lstm import LSTM, default_lstm_params
 from .resnet import ResNet1D, default_resnet_params
 from .specorformer import SpeCorformer1D, default_specorformer1d_params
+from .spectransformer import SpecTransformer1D, default_spectransformer1d_params
 from .transformer import Transformer1D, default_transformer1d_params
 from .vgg import VGG1D, default_vgg1d_params
 
@@ -45,6 +46,11 @@ MODEL_ALIASES = {
     "specorformer1d": "specorformer",
     "1d_specorformer": "specorformer",
     "cor_spec_former": "specorformer",
+    "spectransformer": "spectransformer",
+    "spectransformer1d": "spectransformer",
+    "1d_spectransformer": "spectransformer",
+    "spec_transformer": "spectransformer",
+    "spectral_transformer": "spectransformer",
 }
 
 MODEL_CLASSES = {
@@ -57,6 +63,7 @@ MODEL_CLASSES = {
     "convnext": ConvNeXt1D,
     "transformer": Transformer1D,
     "specorformer": SpeCorformer1D,
+    "spectransformer": SpecTransformer1D,
 }
 
 MODEL_DEFAULTS = {
@@ -69,6 +76,7 @@ MODEL_DEFAULTS = {
     "convnext": default_convnext1d_params,
     "transformer": default_transformer1d_params,
     "specorformer": default_specorformer1d_params,
+    "spectransformer": default_spectransformer1d_params,
 }
 
 

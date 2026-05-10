@@ -1,5 +1,13 @@
 """Model package for LIBS metal classification."""
 
+from .attention import (
+    CrossAttention1D,
+    FrequencyDomainSelfAttention1D,
+    HybridFrequencySelfAttention1D,
+    MultiHeadSelfAttention1D,
+    SpectralAttention,
+    SpectralCorrelationSelfAttention1D,
+)
 from .cnn import CNN, ConvBlock, default_cnn_params
 from .common import (
     INPUT_CHANNELS,
@@ -16,15 +24,16 @@ from .inception import Inception1D, InceptionBlock1D, default_inception1d_params
 from .lstm import LSTM, default_lstm_params
 from .resnet import BasicBlock1D, ResNet1D, default_resnet_params
 from .specorformer import (
-    CrossAttention1D,
-    FrequencyDomainSelfAttention1D,
-    HybridFrequencySelfAttention1D,
     SpeCorformer1D,
     SpeCorformerDecoderBlock1D,
     SpeCorformerEncoderBlock1D,
-    SpectralCorrelationSelfAttention1D,
     SpectrumPatchEmbedding1D,
     default_specorformer1d_params,
+)
+from .spectransformer import (
+    SpecTransformer1D,
+    SpecTransformerEncoderLayer1D,
+    default_spectransformer1d_params,
 )
 from .transformer import Transformer1D, default_transformer1d_params
 from .vgg import VGG1D, VGGBlock1D, default_vgg1d_params
@@ -42,15 +51,19 @@ __all__ = [
     "InceptionBlock1D",
     "LSTM",
     "MODEL_NAMES",
+    "MultiHeadSelfAttention1D",
     "NUM_METAL_CLASSES",
     "ResNet1D",
     "SIGNAL_LENGTH",
     "CrossAttention1D",
     "FrequencyDomainSelfAttention1D",
     "HybridFrequencySelfAttention1D",
+    "SpecTransformer1D",
+    "SpecTransformerEncoderLayer1D",
     "SpeCorformer1D",
     "SpeCorformerDecoderBlock1D",
     "SpeCorformerEncoderBlock1D",
+    "SpectralAttention",
     "SpectralCorrelationSelfAttention1D",
     "SpectrumPatchEmbedding1D",
     "Transformer1D",
@@ -65,6 +78,7 @@ __all__ = [
     "default_lstm_params",
     "default_resnet_params",
     "default_specorformer1d_params",
+    "default_spectransformer1d_params",
     "default_transformer1d_params",
     "default_vgg1d_params",
     "get_default_model_params",

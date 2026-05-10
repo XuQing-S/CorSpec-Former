@@ -10,7 +10,18 @@ from torch import nn
 INPUT_CHANNELS = 1
 SIGNAL_LENGTH = 8192
 NUM_METAL_CLASSES = 6
-MODEL_NAMES = ("fnn", "cnn", "lstm", "resnet", "vgg", "inception", "convnext", "transformer", "specorformer")
+MODEL_NAMES = (
+    "fnn",
+    "cnn",
+    "lstm",
+    "resnet",
+    "vgg",
+    "inception",
+    "convnext",
+    "transformer",
+    "specorformer",
+    "spectransformer",
+)
 
 
 def initialize_weights(module: nn.Module) -> None:

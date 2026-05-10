@@ -1,0 +1,31 @@
+{
+  "description": "1D spectral Transformer with replaceable attention for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "spectransformer_128_4_4_spectral_0.2_16_mean"
+  },
+  "model": "spectransformer",
+  "model_params": {
+    "input_channels": 1,
+    "d_model": 128,
+    "nhead": 4,
+    "num_layers": 4,
+    "dim_feedforward": 256,
+    "dropout": 0.2,
+    "patch_size": 16,
+    "conv_kernel_size": 16,
+    "pooling": "mean",
+    "max_sequence_length": 520,
+    "attention_type": "spectral",
+    "frequency_bands": 64,
+    "local_kernel_size": 5
+  },
+  "optimization": {
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

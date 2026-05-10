@@ -2,12 +2,33 @@
 
 from __future__ import annotations
 
-import math
-
 import torch
 from torch import nn
 
+from .attention import (
+    CrossAttention1D,
+    FrequencyDomainSelfAttention1D,
+    HybridFrequencySelfAttention1D,
+    MultiHeadSelfAttention1D,
+    SpectralCorrelationSelfAttention1D,
+    make_self_attention,
+)
 from .common import INPUT_CHANNELS, NUM_METAL_CLASSES, copy_default_params, initialize_weights
+
+__all__ = [
+    "CrossAttention1D",
+    "FrequencyDomainSelfAttention1D",
+    "HybridFrequencySelfAttention1D",
+    "MultiHeadSelfAttention1D",
+    "SpeCorformer1D",
+    "SpeCorformerDecoderBlock1D",
+    "SpeCorformerEncoderBlock1D",
+    "SpeCorformerDecoderStage1D",
+    "SpeCorformerEncoderStage1D",
+    "SpectralCorrelationSelfAttention1D",
+    "SpectrumPatchEmbedding1D",
+    "default_specorformer1d_params",
+]
 
 
 SPECORFORMER1D_DEFAULT_PARAMS = {
@@ -64,175 +85,6 @@ class SpectrumPatchEmbedding1D(nn.Module):
         return self.proj(x).transpose(1, 2)
 
 
-class SpectralCorrelationSelfAttention1D(nn.Module):
-    """Token-wise 1D spectral correlation self-attention."""
-
-    def __init__(self, dim: int, dropout: float = 0.0) -> None:
-        super().__init__()
-        self.qkv = nn.Linear(dim, dim * 3)
-        self.proj = nn.Sequential(
-            nn.Linear(dim, dim),
-            nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        batch_size, num_tokens, channels = x.shape
-        q, k, v = self.qkv(x).chunk(3, dim=-1)
-
-        q = q - q.mean(dim=-1, keepdim=True)
-        k = k - k.mean(dim=-1, keepdim=True)
-
-        q2 = q.pow(2)
-        k2 = k.pow(2)
-        q2 = q2 / (q2.sum(dim=-1, keepdim=True) + 1e-7)
-        k2 = k2 / (k2.sum(dim=-1, keepdim=True) + 1e-7)
-
-        q2 = torch.nn.functional.normalize(q2, dim=-1)
-        k2 = torch.nn.functional.normalize(k2, dim=-2)
-        correlation_context = k2.transpose(-2, -1) @ v
-        correlation_tokens = q2 @ correlation_context / math.sqrt(num_tokens)
-
-        return self.proj(v + correlation_tokens).reshape(batch_size, num_tokens, channels)
-
-
-class MultiHeadSelfAttention1D(nn.Module):
-    """Standard token-wise multi-head self-attention for 1D spectra."""
-
-    def __init__(self, dim: int, nhead: int, dropout: float = 0.0) -> None:
-        super().__init__()
-        self.attn = nn.MultiheadAttention(dim, nhead, dropout=dropout, batch_first=True)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x, _ = self.attn(x, x, x, need_weights=False)
-        return x
-
-
-class FrequencyDomainSelfAttention1D(nn.Module):
-    """Frequency-domain self-attention for 1D spectral token sequences."""
-
-    def __init__(self, dim: int, num_frequency_bands: int = 64, dropout: float = 0.0) -> None:
-        super().__init__()
-        if num_frequency_bands < 1:
-            raise ValueError("num_frequency_bands must be greater than or equal to 1")
-
-        self.num_frequency_bands = num_frequency_bands
-        self.channel_gate = nn.Sequential(
-            nn.Linear(dim, dim),
-            nn.Sigmoid(),
-        )
-        self.frequency_mixer = nn.Sequential(
-            nn.Linear(dim, dim * 2),
-            nn.GELU(),
-            nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
-            nn.Linear(dim * 2, dim),
-        )
-        self.frequency_scale = nn.Parameter(torch.tensor(0.1))
-        self.proj = nn.Sequential(
-            nn.Linear(dim, dim),
-            nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        num_tokens = x.size(1)
-        spectrum = torch.fft.rfft(x, dim=1, norm="ortho")
-        amplitude = torch.abs(spectrum)
-
-        if amplitude.size(1) > self.num_frequency_bands:
-            pooled_amplitude = torch.nn.functional.adaptive_avg_pool1d(
-                amplitude.transpose(1, 2),
-                self.num_frequency_bands,
-            ).transpose(1, 2)
-        else:
-            pooled_amplitude = amplitude
-
-        channel_gate = self.channel_gate(pooled_amplitude.mean(dim=1)).unsqueeze(1)
-        frequency_delta = torch.tanh(self.frequency_mixer(amplitude))
-        enhanced_spectrum = spectrum * (1.0 + self.frequency_scale * frequency_delta * channel_gate)
-
-        x = torch.fft.irfft(enhanced_spectrum, n=num_tokens, dim=1, norm="ortho")
-        return self.proj(x)
-
-
-class HybridFrequencySelfAttention1D(nn.Module):
-    """Frequency-domain attention with a local convolution residual branch."""
-
-    def __init__(
-        self,
-        dim: int,
-        num_frequency_bands: int = 64,
-        local_kernel_size: int = 5,
-        dropout: float = 0.0,
-    ) -> None:
-        super().__init__()
-        if local_kernel_size < 1:
-            raise ValueError("local_kernel_size must be greater than or equal to 1")
-
-        self.frequency_attn = FrequencyDomainSelfAttention1D(dim, num_frequency_bands, dropout)
-        self.local_branch = nn.Sequential(
-            nn.Conv1d(
-                dim,
-                dim,
-                kernel_size=local_kernel_size,
-                padding=local_kernel_size // 2,
-                groups=dim,
-                bias=False,
-            ),
-            nn.BatchNorm1d(dim),
-            nn.GELU(),
-            nn.Conv1d(dim, dim, kernel_size=1, bias=False),
-            nn.BatchNorm1d(dim),
-            nn.GELU(),
-        )
-        self.local_scale = nn.Parameter(torch.tensor(0.1))
-        self.proj = nn.Sequential(
-            nn.Linear(dim, dim),
-            nn.Dropout(dropout) if dropout > 0 else nn.Identity(),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        frequency_tokens = self.frequency_attn(x)
-        local_tokens = self.local_branch(x.transpose(1, 2)).transpose(1, 2)
-        return self.proj(frequency_tokens + self.local_scale * local_tokens)
-
-
-class CrossAttention1D(nn.Module):
-    """Cross attention from current-scale queries to previous-scale memory tokens."""
-
-    def __init__(self, query_dim: int, memory_dim: int, nhead: int, dropout: float = 0.0) -> None:
-        super().__init__()
-        if query_dim % nhead != 0:
-            raise ValueError("query_dim must be divisible by nhead for cross attention")
-
-        self.memory_proj = nn.Linear(memory_dim, query_dim) if memory_dim != query_dim else nn.Identity()
-        self.attn = nn.MultiheadAttention(query_dim, nhead, dropout=dropout, batch_first=True)
-
-    def forward(self, x: torch.Tensor, memory: torch.Tensor) -> torch.Tensor:
-        memory = self.memory_proj(memory)
-        x, _ = self.attn(query=x, key=memory, value=memory, need_weights=False)
-        return x
-
-
-def _make_self_attention(
-    attention_type: str,
-    dim: int,
-    nhead: int,
-    dropout: float,
-    frequency_bands: int,
-    local_kernel_size: int,
-) -> nn.Module:
-    if attention_type == "mhsa":
-        if dim % nhead != 0:
-            raise ValueError("dim must be divisible by nhead when using mhsa")
-        return MultiHeadSelfAttention1D(dim, nhead, dropout)
-    if attention_type == "scsa":
-        return SpectralCorrelationSelfAttention1D(dim, dropout)
-    if attention_type == "fdsa":
-        return FrequencyDomainSelfAttention1D(dim, frequency_bands, dropout)
-    if attention_type == "hfsa":
-        return HybridFrequencySelfAttention1D(dim, frequency_bands, local_kernel_size, dropout)
-    raise ValueError("self_attention_type must be 'mhsa', 'scsa', 'fdsa', or 'hfsa'")
-
-
 class SpeCorformerEncoderBlock1D(nn.Module):
     """First-scale block: self attention followed by an MLP."""
 
@@ -249,7 +101,7 @@ class SpeCorformerEncoderBlock1D(nn.Module):
         super().__init__()
         hidden_dim = int(dim * mlp_ratio)
         self.norm1 = nn.LayerNorm(dim)
-        self.self_attn = _make_self_attention(attention_type, dim, nhead, dropout, frequency_bands, local_kernel_size)
+        self.self_attn = make_self_attention(attention_type, dim, nhead, dropout, frequency_bands, local_kernel_size)
         self.drop_path = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.norm2 = nn.LayerNorm(dim)
         self.mlp = nn.Sequential(
@@ -288,7 +140,7 @@ class SpeCorformerDecoderBlock1D(nn.Module):
 
         hidden_dim = int(dim * mlp_ratio)
         self.norm1 = nn.LayerNorm(dim)
-        self.self_attn = _make_self_attention(
+        self.self_attn = make_self_attention(
             self_attention_type,
             dim,
             self_nhead,
