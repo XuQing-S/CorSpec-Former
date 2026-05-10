@@ -1,16 +1,19 @@
 {
-  "description": "1D ResNet baseline for LIBS metal classification.",
+  "description": "1D ConvNeXt-style baseline for LIBS metal classification.",
   "experiment": {
     "output_root": "experiments/dl",
-    "run_name": "resnet_32_2_31_16_0.35"
+    "run_name": "convnext_2_32_7_31_16_0.35"
   },
-  "model": "resnet",
+  "model": "convnext",
   "model_params": {
     "input_channels": 1,
-    "base_channels": 32,
-    "blocks_per_stage": [2, 2, 2, 2],
+    "depths": [2, 2, 4, 2],
+    "dims": [32, 64, 128, 256],
+    "kernel_size": 7,
     "stem_kernel_size": 31,
     "stem_stride": 16,
+    "mlp_ratio": 4,
+    "layer_scale_init": 0.000001,
     "dropout": 0.35
   },
   "optimization": {

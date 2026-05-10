@@ -1,0 +1,32 @@
+{
+  "description": "Multi-scale SpeCorformer with cross-scale token fusion for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "specorformer_32_16_112_244_44_mhsa_0.2_concatmean"
+  },
+  "model": "specorformer",
+  "model_params": {
+    "input_channels": 1,
+    "embed_dims": [64, 128, 128],
+    "patch_sizes": [16, 32, 64],
+    "patch_kernel_sizes": [16, 32, 64],
+    "depths": [2, 2, 2],
+    "self_nheads": [4, 4, 4],
+    "cross_nheads": [4, 4],
+    "mlp_ratios": [2.0, 2.0, 2.0],
+    "self_attention_type": "mhsa",
+    "frequency_bands": [64, 64, 64],
+    "local_kernel_sizes": [5, 5, 5],
+    "cross_attention_type": "mhca",
+    "dropout": 0.2,
+    "pooling": "concat_mean"
+  },
+  "optimization": {
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

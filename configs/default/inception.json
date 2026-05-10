@@ -1,16 +1,16 @@
 {
-  "description": "1D ResNet baseline for LIBS metal classification.",
+  "description": "1D Inception-style baseline for LIBS metal classification.",
   "experiment": {
     "output_root": "experiments/dl",
-    "run_name": "resnet_32_2_31_16_0.35"
+    "run_name": "inception_baseline"
   },
-  "model": "resnet",
+  "model": "inception",
   "model_params": {
     "input_channels": 1,
-    "base_channels": 32,
-    "blocks_per_stage": [2, 2, 2, 2],
-    "stem_kernel_size": 31,
-    "stem_stride": 16,
+    "stem_channels": 32,
+    "branch_channels": [[32, 32, 32, 32], [64, 64, 64, 64], [96, 96, 96, 96]],
+    "kernel_sizes": [5, 9],
+    "pool_sizes": [2, 2, null],
     "dropout": 0.35
   },
   "optimization": {

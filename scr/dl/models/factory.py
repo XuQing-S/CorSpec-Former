@@ -6,9 +6,14 @@ from torch import nn
 
 from .cnn import CNN, default_cnn_params
 from .common import MODEL_NAMES, NUM_METAL_CLASSES
+from .convnext import ConvNeXt1D, default_convnext1d_params
 from .fnn import FNN, default_fnn_params
+from .inception import Inception1D, default_inception1d_params
 from .lstm import LSTM, default_lstm_params
 from .resnet import ResNet1D, default_resnet_params
+from .specorformer import SpeCorformer1D, default_specorformer1d_params
+from .transformer import Transformer1D, default_transformer1d_params
+from .vgg import VGG1D, default_vgg1d_params
 
 
 MODEL_ALIASES = {
@@ -23,6 +28,23 @@ MODEL_ALIASES = {
     "resnet": "resnet",
     "1d_resnet": "resnet",
     "resnet1d": "resnet",
+    "vgg": "vgg",
+    "vgg1d": "vgg",
+    "1d_vgg": "vgg",
+    "inception": "inception",
+    "inception1d": "inception",
+    "1d_inception": "inception",
+    "convnext": "convnext",
+    "convnext1d": "convnext",
+    "1d_convnext": "convnext",
+    "transformer": "transformer",
+    "transformer1d": "transformer",
+    "1d_transformer": "transformer",
+    "tansformer": "transformer",
+    "specorformer": "specorformer",
+    "specorformer1d": "specorformer",
+    "1d_specorformer": "specorformer",
+    "cor_spec_former": "specorformer",
 }
 
 MODEL_CLASSES = {
@@ -30,6 +52,11 @@ MODEL_CLASSES = {
     "cnn": CNN,
     "lstm": LSTM,
     "resnet": ResNet1D,
+    "vgg": VGG1D,
+    "inception": Inception1D,
+    "convnext": ConvNeXt1D,
+    "transformer": Transformer1D,
+    "specorformer": SpeCorformer1D,
 }
 
 MODEL_DEFAULTS = {
@@ -37,6 +64,11 @@ MODEL_DEFAULTS = {
     "cnn": default_cnn_params,
     "lstm": default_lstm_params,
     "resnet": default_resnet_params,
+    "vgg": default_vgg1d_params,
+    "inception": default_inception1d_params,
+    "convnext": default_convnext1d_params,
+    "transformer": default_transformer1d_params,
+    "specorformer": default_specorformer1d_params,
 }
 
 

@@ -1,0 +1,28 @@
+{
+  "description": "1D Transformer baseline for LIBS metal classification.",
+  "experiment": {
+    "output_root": "experiments/dl",
+    "run_name": "transformer_128_4_4_256_0.2_16_mean"
+  },
+  "model": "transformer",
+  "model_params": {
+    "input_channels": 1,
+    "d_model": 128,
+    "nhead": 4,
+    "num_layers": 4,
+    "dim_feedforward": 256,
+    "dropout": 0.2,
+    "patch_size": 16,
+    "conv_kernel_size": 16,
+    "pooling": "mean",
+    "max_sequence_length": 520
+  },
+  "optimization": {
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001,
+    "lr_scheduler": "cosine",
+    "lr_factor": 0.7,
+    "lr_patience": 8,
+    "min_lr": 0.00002
+  }
+}

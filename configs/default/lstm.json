@@ -2,12 +2,12 @@
   "description": "Conv-LSTM baseline for LIBS metal classification.",
   "experiment": {
     "output_root": "experiments/dl",
-    "run_name": "lstm_31_16_256_2_mean_0.4"
+    "run_name": "lstm_256_31_16_256_2_mean_0.4"
   },
   "model": "lstm",
   "model_params": {
     "input_channels": 1,
-    "conv_channels": 128,
+    "conv_channels": 256,
     "conv_kernel_size": 31,
     "conv_stride": 16,
     "hidden_size": 256,

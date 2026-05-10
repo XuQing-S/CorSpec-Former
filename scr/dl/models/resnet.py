@@ -61,7 +61,7 @@ class ResNet1D(nn.Module):
     ) -> None:
         super().__init__()
         if len(blocks_per_stage) != 4:
-            raise ValueError("ResNet1DMetalClassifier expects four stages")
+            raise ValueError("ResNet1D expects four stages")
 
         self.in_channels = base_channels
         self.stem = nn.Sequential(

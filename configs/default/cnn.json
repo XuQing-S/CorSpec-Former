@@ -2,7 +2,7 @@
   "description": "1D CNN baseline for LIBS metal classification.",
   "experiment": {
     "output_root": "experiments/dl",
-    "run_name": "cnn_baseline"
+    "run_name": "cnn_32_15_0.32"
   },
   "model": "cnn",
   "model_params": {
